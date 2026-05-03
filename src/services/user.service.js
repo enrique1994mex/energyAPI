@@ -1,7 +1,11 @@
+import prisma from "../config/prisma.js";
+
 export const getUsers = async () => {
-  // Aquí iría DB o API externa
-  return [
-    { id: 1, name: "Juan" },
-    { id: 2, name: "Ana" },
-  ];
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true
+    }
+  });
+  return users;
 };

@@ -1,21 +1,28 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import prisma from '../config/prisma.js';
 
-const users = [];
-const refreshTokens = [];
 
 export const register = async ({ email, password }) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const user = { id: users.length + 1, email, password: hashedPassword };
-  users.push(user);
+  const user = await prisma.user.create({
+    data: {
+      email,
+      password: hashedPassword
+    }
+  });
 
   const { password: _, ...userWithoutPassword } = user;
   return userWithoutPassword;
 };
 
 export const login = async ({ email, password }) => {
-  const user = users.find(u => u.email === email);
+  const user = await prisma.user.findUnique({
+    where: {
+      email
+    }
+  });
 
   if (!user) throw new Error("Invalid credentials");
 
@@ -25,27 +32,45 @@ export const login = async ({ email, password }) => {
   const accessToken = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '15m' });
   const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
-  refreshTokens.push(refreshToken);
+  await prisma.refreshToken.create({
+    data: {
+      token: refreshToken,
+      userId: user.id
+    }
+  });
 
   return { accessToken, refreshToken }; 
 };
 
 export const refreshToken = async (token) => {
-  if (!refreshTokens.includes(token)) throw new Error("Invalid refresh token");
+  const storedToken = await prisma.refreshToken.findUnique({
+    where: {
+      token
+    }
+  });
+
+  if (!storedToken) throw new Error("Invalid refresh token");
 
   const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 
-  const index = refreshTokens.indexOf(token);
-  refreshTokens.splice(index, 1);
+  await prisma.refreshToken.delete({ where: { token } });
 
   const accessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
   const newRefreshToken = jwt.sign({ id: decoded.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
-  refreshTokens.push(newRefreshToken);
+  await prisma.refreshToken.create({
+    data: {
+      token: newRefreshToken,
+      userId: decoded.id
+    }
+  });
 
   return { accessToken, refreshToken: newRefreshToken };
 };
 
-export const logout = (token) => {
-  const index = refreshTokens.indexOf(token);
-  if (index !== -1) refreshTokens.splice(index, 1);
+export const logout = async (token) => {
+  await prisma.refreshToken.delete({
+    where: {
+      token
+    } 
+  });
 };
