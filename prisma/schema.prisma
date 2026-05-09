@@ -19,6 +19,7 @@ model User {
   createdAt DateTime @default(now())
 
   refreshTokens RefreshToken[]
+  energyContracts EnergyContract[]
 }
 
 model RefreshToken {
@@ -27,4 +28,46 @@ model RefreshToken {
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model Tariff {
+  id        Int      @id @default(autoincrement())
+  name      String
+  city      String
+
+  pricePerKwh     Float
+  fixedCharge     Float
+  createdAt       DateTime @default(now())
+  energyContracts EnergyContract[]
+}
+
+model EnergyContract {
+  id        Int       @id @default(autoincrement())
+  contractName String
+  meterNumber  String   @unique
+  isActive     Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+
+   // RELACIÓN CON USER
+  userId         Int
+  user           User @relation(fields: [userId], references: [id])
+
+  // RELACIÓN CON TARIFF
+  tariffId       Int
+  tariff         Tariff @relation(fields: [tariffId], references: [id])
+
+  // RELACIÓN CON CONSUMPTION RECORDS
+  consumptionRecords ConsumptionRecord[]
+}
+
+model ConsumptionRecord {
+  id        Int        @id @default(autoincrement())
+  month     Int        
+  year      Int
+
+  KwhConsumed    Float
+  createdAt      DateTime @default(now())
+  contractId     Int
+  contract       EnergyContract @relation(fields: [contractId], references: [id])
 }
