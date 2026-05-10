@@ -19,7 +19,6 @@ export const getContractsByUser = async (userId) => {
           fixedCharge: true,
         },
       },
-      orderBy: { createdAt: "desc" },
     },
   });
 };
