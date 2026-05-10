@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import prisma from '../config/prisma.js';
+import { AppError } from '../errors/AppError.js';
 
 
 export const register = async ({ email, password }) => {
@@ -24,10 +25,10 @@ export const login = async ({ email, password }) => {
     }
   });
 
-  if (!user) throw new Error("Invalid credentials");
+  if (!user) throw new AppError("Invalid credentials", 401);
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new Error("Invalid credentials");
+  if (!isMatch) throw new AppError("Invalid credentials", 401);
 
   const accessToken = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '15m' });
   const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
@@ -49,7 +50,7 @@ export const refreshToken = async (token) => {
     }
   });
 
-  if (!storedToken) throw new Error("Invalid refresh token");
+  if (!storedToken) throw new AppError("Invalid refresh token", 401);
 
   const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 
