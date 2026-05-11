@@ -13,8 +13,8 @@ const defaultTariffs = [
 ];
 
 const defaultUsers = [
-  { email: 'admin@example.com',  password: 'Admin123!' },
-  { email: 'demo@example.com',   password: 'Demo123!'  },
+  { email: 'admin@example.com', password: 'Admin123!', role: 'ADMIN' },
+  { email: 'demo@example.com',  password: 'Demo123!',  role: 'USER'  },
 ];
 
 async function main() {
@@ -30,12 +30,12 @@ async function main() {
   }
 
   // Users — upsert by email so running the seed twice is safe
-  for (const { email, password } of defaultUsers) {
+  for (const { email, password, role } of defaultUsers) {
     const hashed = await bcrypt.hash(password, 10);
     await prisma.user.upsert({
       where:  { email },
-      update: {},
-      create: { email, password: hashed },
+      update: { role },
+      create: { email, password: hashed, role },
     });
   }
   console.log(`Upserted ${defaultUsers.length} users.`);
