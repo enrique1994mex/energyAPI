@@ -1,12 +1,7 @@
 import * as contractService from "../services/contract.service.js";
 import { createContractSchema, updateContractSchema } from "../schemas/contract.schema.js";
 import { AppError } from "../errors/AppError.js";
-
-const parseId = (param) => {
-  const id = parseInt(param);
-  if (isNaN(id)) throw new AppError("Invalid ID", 400);
-  return id;
-};
+import { parseId } from "../utils/parseId.js";
 
 export const getContracts = async (req, res, next) => {
   try {
