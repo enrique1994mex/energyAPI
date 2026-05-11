@@ -66,7 +66,7 @@ model ConsumptionRecord {
   month     Int        
   year      Int
 
-  KwhConsumed    Float
+  kwhConsumed    Float
   createdAt      DateTime @default(now())
   contractId     Int
   contract       EnergyContract @relation(fields: [contractId], references: [id])
