@@ -24,7 +24,7 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
 
-  refreshTokens RefreshToken[]
+  refreshTokens   RefreshToken[]
   energyContracts EnergyContract[]
 }
 
@@ -36,44 +36,86 @@ model RefreshToken {
   createdAt DateTime @default(now())
 }
 
+// Catálogo de tipos de tarifa (solo 7 registros: 1, 1A … 1F).
+// type: String con los valores CFE reales ("1", "1A", "1B", "1C", "1D", "1E", "1F").
+// summerStartMonth/summerEndMonth: meses inclusivos del periodo de verano (null = sin verano, ej. tarifa 1).
 model Tariff {
-  id        Int      @id @default(autoincrement())
-  name      String
-  city      String
+  id               Int    @id @default(autoincrement())
+  type             String @unique
+  summerStartMonth Int?
+  summerEndMonth   Int?
 
-  pricePerKwh     Float
-  fixedCharge     Float
-  createdAt       DateTime @default(now())
+  cityMappings    CityTariff[]
+  monthlyRates    TariffMonthlyRate[]
   energyContracts EnergyContract[]
 }
 
+// Mapeo ciudad → tarifa (datos de referencia / seed)
+model CityTariff {
+  id       Int    @id @default(autoincrement())
+  city     String @unique
+  tariffId Int
+  tariff   Tariff @relation(fields: [tariffId], references: [id])
+}
+
+// Cargo fijo y bloques para un mes, año y temporada específicos dentro de una tarifa.
+// isSummer=true: precios y límites de la temporada de verano de la CFE.
+// fixedCharge: cargo de suministro mensual en MXN (prorratear por días del periodo).
+model TariffMonthlyRate {
+  id          Int     @id @default(autoincrement())
+  month       Int
+  year        Int
+  isSummer    Boolean @default(false)
+  fixedCharge Float
+  tariffId    Int
+  tariff      Tariff  @relation(fields: [tariffId], references: [id])
+
+  blocks TariffBlock[]
+
+  @@unique([tariffId, month, year, isSummer])
+}
+
+// Un bloque de consumo dentro de una tarifa mensual.
+// blockOrder: 1 = Básico, 2 = Intermedio, 3 = Excedente (T1D tiene hasta 4).
+// kwhLimit: límite diario en kWh para este bloque (null = sin límite, último bloque).
+//   Para obtener el límite del periodo: kwhLimit * días_del_subperiodo.
+model TariffBlock {
+  id                  Int               @id @default(autoincrement())
+  blockOrder          Int
+  blockName           String
+  kwhLimit            Float?
+  pricePerKwh         Float
+  tariffMonthlyRateId Int
+  tariffMonthlyRate   TariffMonthlyRate @relation(fields: [tariffMonthlyRateId], references: [id])
+
+  @@unique([tariffMonthlyRateId, blockOrder])
+}
+
 model EnergyContract {
-  id        Int       @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   contractName String
-  meterNumber  String   @unique
-  isActive     Boolean  @default(true)
+  meterNumber  String  @unique
+  city         String
+  isActive     Boolean @default(true)
 
   createdAt DateTime @default(now())
 
-   // RELACIÓN CON USER
-  userId         Int
-  user           User @relation(fields: [userId], references: [id])
+  userId   Int
+  user     User   @relation(fields: [userId], references: [id])
+  tariffId Int
+  tariff   Tariff @relation(fields: [tariffId], references: [id])
 
-  // RELACIÓN CON TARIFF
-  tariffId       Int
-  tariff         Tariff @relation(fields: [tariffId], references: [id])
-
-  // RELACIÓN CON CONSUMPTION RECORDS
   consumptionRecords ConsumptionRecord[]
 }
 
 model ConsumptionRecord {
-  id        Int        @id @default(autoincrement())
-  month     Int        
-  year      Int
+  id            Int      @id @default(autoincrement())
+  periodStart   DateTime
+  periodEnd     DateTime
+  kwhNonSummer  Float
+  kwhSummer     Float
 
-  kwhConsumed    Float
-  createdAt      DateTime @default(now())
-  contractId     Int
-  contract       EnergyContract @relation(fields: [contractId], references: [id])
+  createdAt  DateTime       @default(now())
+  contractId Int
+  contract   EnergyContract @relation(fields: [contractId], references: [id])
 }

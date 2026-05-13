@@ -1,0 +1,91 @@
+Table User {
+  id        Int      [pk, increment]
+  email     String   [unique, not null]
+  password  String   [not null]
+  role      Role     [not null, default: 'USER']
+  createdAt DateTime [default: `now()`]
+}
+
+Table RefreshToken {
+  id        Int      [pk, increment]
+  token     String   [unique, not null]
+  userId    Int      [not null, ref: > User.id]
+  createdAt DateTime [default: `now()`]
+}
+
+// Catálogo: solo 7 registros (1, 1A … 1F). type guarda el valor CFE real como String.
+Table Tariff {
+  id               Int    [pk, increment]
+  type             String [unique, not null]
+  summerStartMonth Int
+  summerEndMonth   Int
+}
+
+// Mapeo ciudad → tarifa (seed data)
+Table CityTariff {
+  id       Int    [pk, increment]
+  city     String [unique, not null]
+  tariffId Int    [not null, ref: > Tariff.id]
+}
+
+// Cargo fijo y temporada para un mes/año/tarifa.
+// isSummer=true: precios de temporada de verano CFE.
+// fixedCharge: cargo de suministro mensual en MXN (solo en registros isSummer=false).
+Table TariffMonthlyRate {
+  id          Int     [pk, increment]
+  month       Int     [not null]
+  year        Int     [not null]
+  isSummer    Boolean [not null, default: false]
+  fixedCharge Float   [not null]
+  tariffId    Int     [not null, ref: > Tariff.id]
+
+  indexes {
+    (tariffId, month, year, isSummer) [unique]
+  }
+}
+
+// Bloques de consumo por tarifa mensual.
+// blockOrder: 1=Básico 2=Intermedio 3=Excedente.
+// kwhLimit: límite DIARIO en kWh (null = sin límite, último bloque).
+//   Límite del periodo = kwhLimit × días_del_subperiodo.
+Table TariffBlock {
+  id                  Int    [pk, increment]
+  blockOrder          Int    [not null]
+  blockName           String [not null]
+  kwhLimit            Float
+  pricePerKwh         Float  [not null]
+  tariffMonthlyRateId Int    [not null, ref: > TariffMonthlyRate.id]
+
+  indexes {
+    (tariffMonthlyRateId, blockOrder) [unique]
+  }
+}
+
+Table EnergyContract {
+  id           Int     [pk, increment]
+  contractName String  [not null]
+  meterNumber  String  [unique, not null]
+  city         String  [not null]
+  isActive     Boolean [default: true]
+  createdAt    DateTime [default: `now()`]
+  userId       Int     [not null, ref: > User.id]
+  tariffId     Int     [not null, ref: > Tariff.id]
+}
+
+// kwhNonSummer + kwhSummer = consumo total del periodo.
+// La CFE determina el split manualmente según los días fuera/dentro de verano.
+Table ConsumptionRecord {
+  id           Int      [pk, increment]
+  periodStart  DateTime [not null]
+  periodEnd    DateTime [not null]
+  kwhNonSummer Float    [not null]
+  kwhSummer    Float    [not null]
+  createdAt    DateTime [default: `now()`]
+  contractId   Int      [not null, ref: > EnergyContract.id]
+}
+
+Enum Role {
+  ADMIN
+  USER
+}
+
