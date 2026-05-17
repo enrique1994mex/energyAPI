@@ -14,18 +14,21 @@ Table RefreshToken {
 }
 
 // Catálogo: solo 7 registros (1, 1A … 1F). type guarda el valor CFE real como String.
+// El periodo de verano no es fijo por tarifa: se determina por los registros isSummer=true
+// en TariffMonthlyRate (puede variar por año según publicaciones del DOF).
 Table Tariff {
-  id               Int    [pk, increment]
-  type             String [unique, not null]
-  summerStartMonth Int
-  summerEndMonth   Int
+  id   Int    [pk, increment]
+  type String [unique, not null]
 }
 
-// Mapeo ciudad → tarifa (seed data)
+// Mapeo ciudad → tarifa (seed data).
+// summerStartMonth/summerEndMonth: meses inclusivos del verano para esta ciudad (null = sin verano).
 Table CityTariff {
-  id       Int    [pk, increment]
-  city     String [unique, not null]
-  tariffId Int    [not null, ref: > Tariff.id]
+  id               Int    [pk, increment]
+  city             String [unique, not null]
+  tariffId         Int    [not null, ref: > Tariff.id]
+  summerStartMonth Int
+  summerEndMonth   Int
 }
 
 // Cargo fijo y temporada para un mes/año/tarifa.
@@ -45,9 +48,9 @@ Table TariffMonthlyRate {
 }
 
 // Bloques de consumo por tarifa mensual.
-// blockOrder: 1=Básico 2=Intermedio 3=Excedente.
-// kwhLimit: límite DIARIO en kWh (null = sin límite, último bloque).
-//   Límite del periodo = kwhLimit × días_del_subperiodo.
+// blockOrder: 1=Básico 2=Intermedio 3=Excedente (T1D verano hasta 4).
+// kwhLimit: límite MENSUAL acumulado en kWh del bloque (null = sin límite, último bloque).
+//   Límite del periodo = floor(kwhLimit × días_del_subperiodo / días_del_mes).
 Table TariffBlock {
   id                  Int    [pk, increment]
   blockOrder          Int    [not null]
@@ -65,7 +68,7 @@ Table EnergyContract {
   id           Int     [pk, increment]
   contractName String  [not null]
   meterNumber  String  [unique, not null]
-  city         String  [not null]
+  city         String
   isActive     Boolean [default: true]
   createdAt    DateTime [default: `now()`]
   userId       Int     [not null, ref: > User.id]

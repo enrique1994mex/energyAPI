@@ -40,22 +40,24 @@ model RefreshToken {
 // type: String con los valores CFE reales ("1", "1A", "1B", "1C", "1D", "1E", "1F").
 // summerStartMonth/summerEndMonth: meses inclusivos del periodo de verano (null = sin verano, ej. tarifa 1).
 model Tariff {
-  id               Int    @id @default(autoincrement())
-  type             String @unique
-  summerStartMonth Int?
-  summerEndMonth   Int?
+  id   Int    @id @default(autoincrement())
+  type String @unique
 
   cityMappings    CityTariff[]
   monthlyRates    TariffMonthlyRate[]
   energyContracts EnergyContract[]
 }
 
-// Mapeo ciudad → tarifa (datos de referencia / seed)
+// Mapeo ciudad → tarifa (datos de referencia / seed).
+// summerStartMonth/summerEndMonth: meses inclusivos del periodo de verano para esta ciudad
+// (null = sin verano). Permite que dos ciudades con la misma tarifa tengan verano distinto.
 model CityTariff {
-  id       Int    @id @default(autoincrement())
-  city     String @unique
-  tariffId Int
-  tariff   Tariff @relation(fields: [tariffId], references: [id])
+  id               Int    @id @default(autoincrement())
+  city             String @unique
+  tariffId         Int
+  tariff           Tariff @relation(fields: [tariffId], references: [id])
+  summerStartMonth Int?
+  summerEndMonth   Int?
 }
 
 // Cargo fijo y bloques para un mes, año y temporada específicos dentro de una tarifa.
@@ -95,7 +97,7 @@ model EnergyContract {
   id           Int     @id @default(autoincrement())
   contractName String
   meterNumber  String  @unique
-  city         String
+  city         String?
   isActive     Boolean @default(true)
 
   createdAt DateTime @default(now())
