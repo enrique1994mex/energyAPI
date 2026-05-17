@@ -14,11 +14,12 @@ export const createConsumptionRecordSchema = z.object({
 );
 
 export const updateConsumptionRecordSchema = z.object({
-  periodStart:  z.coerce.date().optional(),
-  periodEnd:    z.coerce.date().optional(),
   kwhNonSummer: z.number().min(0).optional(),
   kwhSummer:    z.number().min(0).optional(),
 }).refine(
-  (data) => Object.values(data).some((v) => v !== undefined),
-  { message: 'At least one field is required to update' }
+  (data) => data.kwhNonSummer !== undefined || data.kwhSummer !== undefined,
+  { message: 'At least one kWh field is required to update' }
+).refine(
+  (data) => !(data.kwhNonSummer === 0 && data.kwhSummer === 0),
+  { message: 'kwhNonSummer and kwhSummer cannot both be zero' }
 );

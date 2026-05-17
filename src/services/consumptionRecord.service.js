@@ -30,30 +30,32 @@ export const getConsumptionRecordById = async (recordId, contractId, userId) => 
 export const createConsumptionRecord = async (contractId, userId, recordData) => {
   await verifyContractOwnership(contractId, userId);
 
+  const { periodStart, periodEnd, kwhNonSummer, kwhSummer } = recordData;
+
   return prisma.consumptionRecord.create({
-    data: { ...recordData, contractId },
+    data: { periodStart, periodEnd, kwhNonSummer, kwhSummer, contractId },
   });
 };
 
 export const updateConsumptionRecord = async (recordId, contractId, userId, updateData) => {
-  await verifyContractOwnership(contractId, userId);
-
+  // Verifica existencia del registro y ownership del contrato en una sola query
   const existing = await prisma.consumptionRecord.findFirst({
-    where: { id: recordId, contractId },
+    where: { id: recordId, contractId, contract: { userId } },
   });
   if (!existing) throw new AppError("Consumption record not found", 404);
 
+  const { kwhNonSummer, kwhSummer } = updateData;
+
   return prisma.consumptionRecord.update({
     where: { id: recordId },
-    data: updateData,
+    data: { kwhNonSummer, kwhSummer },
   });
 };
 
 export const deleteConsumptionRecord = async (recordId, contractId, userId) => {
-  await verifyContractOwnership(contractId, userId);
-
+  // Verifica existencia del registro y ownership del contrato en una sola query
   const existing = await prisma.consumptionRecord.findFirst({
-    where: { id: recordId, contractId },
+    where: { id: recordId, contractId, contract: { userId } },
   });
   if (!existing) throw new AppError("Consumption record not found", 404);
 
