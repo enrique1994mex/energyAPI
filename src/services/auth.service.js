@@ -56,12 +56,15 @@ export const refreshToken = async (token) => {
 
   await prisma.refreshToken.delete({ where: { token } });
 
-  const accessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
-  const newRefreshToken = jwt.sign({ id: decoded.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+  const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+  if (!user) throw new AppError("User not found", 401);
+
+  const accessToken = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '15m' });
+  const newRefreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
   await prisma.refreshToken.create({
     data: {
       token: newRefreshToken,
-      userId: decoded.id
+      userId: user.id
     }
   });
 
