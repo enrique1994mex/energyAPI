@@ -39,6 +39,9 @@ export const refreshToken = async (req, res, next) => {
     res.cookie('refreshToken', newRefreshToken, COOKIE_OPTIONS);
     res.json({ accessToken });
   } catch (error) {
+    // Clear the stale cookie so the middleware doesn't redirect back to /dashboard
+    // and trap the client in an infinite loop.
+    res.clearCookie('refreshToken', COOKIE_OPTIONS);
     next(error);
   }
 };

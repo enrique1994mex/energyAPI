@@ -72,9 +72,7 @@ export const refreshToken = async (token) => {
 };
 
 export const logout = async (token) => {
-  await prisma.refreshToken.delete({
-    where: {
-      token
-    } 
+  await prisma.refreshToken.deleteMany({
+    where: { token },
   });
 };
