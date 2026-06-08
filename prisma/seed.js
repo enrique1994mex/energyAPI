@@ -38,8 +38,8 @@ const CITY_TARIFFS = [
 
 // ── Usuarios por defecto ─────────────────────────────────────────────────────
 const DEFAULT_USERS = [
-  { email: 'admin@example.com', password: 'Admin123!', role: 'ADMIN' },
-  { email: 'demo@example.com',  password: 'Demo123!',  role: 'USER'  },
+  { email: 'admin@demo.local', password: 'AdminDemo123!', role: 'ADMIN' },
+  { email: 'user@demo.local',  password: 'UserDemo123!',  role: 'USER'  },
 ];
 
 // ── Bloques T1D ──────────────────────────────────────────────────────────────
@@ -267,12 +267,20 @@ async function seedT1DRatesWithBlocks() {
 }
 
 async function seedUsers() {
+  await prisma.user.deleteMany({
+    where: { 
+      email: {
+        in: ['admin@example.com', 'demo@example.com'],
+      },
+    },
+  }); 
+  
   for (const { email, password, role } of DEFAULT_USERS) {
     const hashed = await bcrypt.hash(password, 10);
 
     await prisma.user.upsert({
       where: { email },
-      update: { role },
+      update: { password: hashed, role },
       create: { email, password: hashed, role },
     });
   }
