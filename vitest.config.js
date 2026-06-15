@@ -5,5 +5,11 @@ export default defineConfig({
     environment: "node",
     globals: true,
     setupFiles: ['./test/helpers/setup.js'],
+    coverage: {
+      provider: "v8",
+      reporter: ["html", "text"],
+      include: ["src/**/*.js"],
+      exclude: ["src/**/*.test.js"],
+    },
   },
 });
