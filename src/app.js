@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { requestLogger } from "./middlewares/requestLogger.middleware.js";
 import userRoutes from "./routes/user.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import contractRoutes from "./routes/contract.routes.js";
@@ -15,6 +16,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(requestLogger);
 
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);

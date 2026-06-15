@@ -1,5 +1,6 @@
 import { ZodError } from 'zod';
 import { AppError } from '../errors/AppError.js';
+import logger from '../config/logger.js';
 
 const errorMiddleware = (err, req, res, next) => {
   if (err instanceof ZodError) {
@@ -26,7 +27,11 @@ const errorMiddleware = (err, req, res, next) => {
     return res.status(401).json({ message: 'Invalid token' });
   }
 
-  console.error(err);
+  logger.error({
+    requestId: req.requestId,
+    error: err.message,
+    stack: err.stack,
+  }, "unhandled error");
   res.status(500).json({ message: 'Internal Server Error' });
 };
 
