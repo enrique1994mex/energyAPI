@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { randomUUID } from 'crypto';
 import prisma from '../config/prisma.js';
 import { AppError } from '../errors/AppError.js';
 
@@ -31,7 +32,7 @@ export const login = async ({ email, password }) => {
   if (!isMatch) throw new AppError("Invalid credentials", 401);
 
   const accessToken = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '15m' });
-  const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+  const refreshToken = jwt.sign({ id: user.id, jti: randomUUID() }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
   await prisma.refreshToken.create({
     data: {
@@ -60,7 +61,7 @@ export const refreshToken = async (token) => {
   if (!user) throw new AppError("User not found", 401);
 
   const accessToken = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '15m' });
-  const newRefreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+  const newRefreshToken = jwt.sign({ id: user.id, jti: randomUUID() }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
   await prisma.refreshToken.create({
     data: {
       token: newRefreshToken,
