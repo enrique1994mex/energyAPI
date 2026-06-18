@@ -1,6 +1,6 @@
 import prisma from '../config/prisma.js';
 import { AppError } from '../errors/AppError.js';
-import { countSeasonDays, findMostCompleteMonth, applyBlocks } from '../utils/billing.utils.js';
+import { countSeasonDays, findMostCompleteMonth, applyBlocks, getDaysInMonth } from '../utils/billing.utils.js';
 
 const IVA_RATE = 0.16;
 // DAP (Derecho al Alumbrado Público) es un impuesto municipal variable.

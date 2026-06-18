@@ -1,4 +1,4 @@
-function getDaysInMonth(month, year) {
+export function getDaysInMonth(month, year) {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
