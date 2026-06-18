@@ -14,7 +14,7 @@ export const register = async (req, res, next) => {
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días en ms
 };
 
@@ -50,9 +50,8 @@ export const logout = async (req, res, next) => {
   try {
     const token = req.cookies.refreshToken;
 
-    if (!token) return res.status(400).json({ message: "Refresh token required" });
+    if (token) await authService.logout(token);
 
-    await authService.logout(token);
     res.clearCookie('refreshToken', COOKIE_OPTIONS);
     res.status(204).send();
   } catch (error) {
