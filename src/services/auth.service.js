@@ -41,7 +41,7 @@ export const login = async ({ email, password }) => {
     }
   });
 
-  return { accessToken, refreshToken }; 
+  return { accessToken, refreshToken, userId: user.id };
 };
 
 export const refreshToken = async (token) => {
