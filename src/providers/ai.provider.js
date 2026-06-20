@@ -11,6 +11,9 @@ Analiza el historial de un contrato y devuelve ÚNICAMENTE un objeto JSON válid
 }
 Sin markdown, sin texto adicional, solo el JSON.`;
 
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
 function buildUserMessage(context) {
   return `Analiza el siguiente contrato eléctrico:\n${JSON.stringify(context, null, 2)}`;
 }
@@ -26,8 +29,7 @@ function parseResponse(text) {
 }
 
 async function callClaude(context) {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const response = await client.messages.create({
+  const response = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 512,
     system: SYSTEM_INSTRUCTION,
@@ -37,7 +39,6 @@ async function callClaude(context) {
 }
 
 async function callGemini(context) {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
     systemInstruction: SYSTEM_INSTRUCTION,
