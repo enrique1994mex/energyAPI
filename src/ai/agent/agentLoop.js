@@ -21,6 +21,9 @@ function parseResponse(text) {
 
 export async function agentLoop(messages, contractId, userId) {
   for (let i = 0; i < MAX_ITERATIONS; i++) {
+    logger.info({ event: 'claude_request', model: 'claude-haiku-4-5-20251001', contractId, iteration: i + 1 }, 'ai metric');
+
+    const start = Date.now();
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1024,
@@ -29,7 +32,15 @@ export async function agentLoop(messages, contractId, userId) {
       messages,
     });
 
-    logger.debug({ contractId, iteration: i + 1, stopReason: response.stop_reason }, 'agent iteration');
+    logger.info({
+      event: 'claude_response',
+      contractId,
+      iteration: i + 1,
+      stopReason: response.stop_reason,
+      durationMs: Date.now() - start,
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    }, 'ai metric');
 
     if (response.stop_reason === 'end_turn') {
       const textBlock = response.content.find(b => b.type === 'text');

@@ -61,5 +61,5 @@ export async function getContractInsights(contractId, userId) {
     billingHistory,
   };
 
-  return callGemini(context);
+  return callGemini(context, contractId);
 }

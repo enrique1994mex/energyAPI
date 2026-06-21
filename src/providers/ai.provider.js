@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AppError } from '../errors/AppError.js';
+import logger from '../config/logger.js';
 
 const SYSTEM_INSTRUCTION = `Eres un analista experto en consumo eléctrico residencial en México (CFE).
 Analiza el historial de un contrato y devuelve ÚNICAMENTE un objeto JSON válido con esta estructura exacta:
@@ -22,14 +23,28 @@ function parseResponse(text) {
   }
 }
 
-export async function callGemini(context) {
+export async function callGemini(context, contractId) {
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
     systemInstruction: SYSTEM_INSTRUCTION,
     generationConfig: { responseMimeType: 'application/json' },
   });
+
+  logger.info({ event: 'gemini_request', model: 'gemini-2.5-flash', contractId }, 'ai metric');
+
+  const start = Date.now();
   const result = await model.generateContent(
     `Analiza el siguiente contrato eléctrico:\n${JSON.stringify(context, null, 2)}`
   );
+
+  const usage = result.response.usageMetadata;
+  logger.info({
+    event: 'gemini_response',
+    contractId,
+    durationMs: Date.now() - start,
+    promptTokens: usage?.promptTokenCount,
+    completionTokens: usage?.candidatesTokenCount,
+  }, 'ai metric');
+
   return parseResponse(result.response.text());
 }
