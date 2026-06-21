@@ -1,4 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AppError } from '../errors/AppError.js';
 
@@ -11,12 +10,7 @@ Analiza el historial de un contrato y devuelve ÚNICAMENTE un objeto JSON válid
 }
 Sin markdown, sin texto adicional, solo el JSON.`;
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-function buildUserMessage(context) {
-  return `Analiza el siguiente contrato eléctrico:\n${JSON.stringify(context, null, 2)}`;
-}
 
 function parseResponse(text) {
   try {
@@ -28,33 +22,14 @@ function parseResponse(text) {
   }
 }
 
-async function callClaude(context) {
-  const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 512,
-    system: SYSTEM_INSTRUCTION,
-    messages: [{ role: 'user', content: buildUserMessage(context) }],
-  });
-  return parseResponse(response.content[0].text);
-}
-
-async function callGemini(context) {
+export async function callGemini(context) {
   const model = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash',
     systemInstruction: SYSTEM_INSTRUCTION,
     generationConfig: { responseMimeType: 'application/json' },
   });
-  const result = await model.generateContent(buildUserMessage(context));
+  const result = await model.generateContent(
+    `Analiza el siguiente contrato eléctrico:\n${JSON.stringify(context, null, 2)}`
+  );
   return parseResponse(result.response.text());
-}
-
-const providers = { claude: callClaude, gemini: callGemini };
-
-export async function callLLM(context) {
-  const providerName = process.env.AI_PROVIDER ?? 'claude';
-  const provider = providers[providerName];
-  if (!provider) {
-    throw new AppError(`Proveedor de IA "${providerName}" no soportado. Use "claude" o "gemini".`, 500);
-  }
-  return provider(context);
 }

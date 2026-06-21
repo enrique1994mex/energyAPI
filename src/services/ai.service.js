@@ -1,10 +1,18 @@
 import * as contractService from './contract.service.js';
 import * as consumptionService from './consumptionRecord.service.js';
 import { simulateBilling } from './billing.service.js';
-import { callLLM } from '../providers/ai.provider.js';
+import { runAgent } from '../ai/agent/agentService.js';
+import { callGemini } from '../providers/ai.provider.js';
 import { AppError } from '../errors/AppError.js';
 
 export async function getContractInsights(contractId, userId) {
+  const providerName = process.env.AI_PROVIDER ?? 'claude';
+
+  if (providerName === 'claude') {
+    return runAgent(contractId, userId);
+  }
+
+  // Gemini: build context and send it in a single call
   const contract = await contractService.getContractById(contractId, userId);
 
   const allRecords = await consumptionService.getConsumptionRecordsByContract(contractId, userId);
@@ -16,7 +24,6 @@ export async function getContractInsights(contractId, userId) {
     throw new AppError('No hay registros de consumo para analizar', 422);
   }
 
-  // Reutiliza la lógica de simulación existente; descarta registros sin tarifas cargadas
   const settled = await Promise.allSettled(
     records.map(r => simulateBilling(r.id, contractId, userId))
   );
@@ -54,5 +61,5 @@ export async function getContractInsights(contractId, userId) {
     billingHistory,
   };
 
-  return callLLM(context);
+  return callGemini(context);
 }
