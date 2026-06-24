@@ -33,6 +33,7 @@ The billing engine is isolated inside the service layer to keep domain logic ind
 - **Security:** bcrypt, httpOnly cookies
 - **Validation:** Zod
 - **Roles:** ADMIN / USER
+- **AI:** Claude Haiku 4.5 via Anthropic SDK (agentic loop with tool use)
 
 ## Features
 
@@ -46,6 +47,10 @@ The billing engine is isolated inside the service layer to keep domain logic ind
   - Block-based consumption pricing (Básico / Intermedio / Excedente)
   - Proportional block limits for sub-periods
   - IVA (16%) and DAP breakdown
+- AI consumption analysis agent (Claude Haiku 4.5) with:
+  - Agentic loop (up to 5 iterations) with tool use
+  - Tools: consumption history, billing simulation, tariff info
+  - Returns summary, detected anomalies, and energy-saving recommendations
 
 ## API Endpoints
 
@@ -71,6 +76,7 @@ The billing engine is isolated inside the service layer to keep domain logic ind
 |--------|----------|------|-------------|
 | GET | `/` | Bearer | List user's contracts |
 | GET | `/:id` | Bearer | Get a contract |
+| GET | `/:id/ai-insights` | Bearer | Run AI agent analysis for a contract |
 | POST | `/` | Bearer | Create a contract |
 | PUT | `/:id` | Bearer | Update a contract |
 | DELETE | `/:id` | Bearer | Delete a contract |
@@ -85,6 +91,24 @@ The billing engine is isolated inside the service layer to keep domain logic ind
 | PUT | `/:recordId` | Bearer | Update kWh values (period is immutable) |
 | DELETE | `/:recordId` | Bearer | Delete a record |
 | GET | `/:recordId/simulate-billing` | Bearer | Simulate CFE bill for this record |
+
+### AI insights response example
+
+The AI agent queries the contract's consumption history, runs billing simulations, and fetches tariff info autonomously before returning:
+
+```json
+{
+  "summary": "Consumo residencial moderado en Mérida (T-1D) con patrón estacional marcado.",
+  "anomalies": [
+    "Variabilidad estacional significativa: consumo de verano 42% más alto comparado con tendencia invernal",
+    "Consumo verano concentrado en pocas semanas sugiere variabilidad en patrones de aire acondicionado"
+  ],
+  "recommendations": [
+    "Implementar medidas de eficiencia para verano: mejorar aislamiento térmico, mantener A/C a 25-26°C",
+    "Evaluar instalación de paneles solares para compensar consumo de verano"
+  ]
+}
+```
 
 ### Billing simulation response example
 
@@ -150,6 +174,7 @@ DATABASE_URL="postgresql://user:password@localhost:5432/api_energy"
 JWT_SECRET="your_jwt_secret"
 JWT_REFRESH_SECRET="your_refresh_secret"
 PORT=3000
+ANTHROPIC_API_KEY="your_anthropic_api_key"
 ```
 
 ### Database setup
@@ -213,6 +238,7 @@ El motor de facturación está aislado en la capa de servicios para mantener la 
 - **Seguridad:** bcrypt, cookies httpOnly
 - **Validación:** Zod
 - **Roles:** ADMIN / USER
+- **IA:** Claude Haiku 4.5 vía Anthropic SDK (agente con tool use)
 
 ## Funcionalidades
 
@@ -226,6 +252,10 @@ El motor de facturación está aislado en la capa de servicios para mantener la 
   - Bloques tarifarios (Básico / Intermedio / Excedente) con precios por kWh
   - Límites proporcionales de bloque para subperiodos
   - Desglose de IVA (16%) y DAP estimado
+- Agente de análisis de consumo con IA (Claude Haiku 4.5):
+  - Bucle agente hasta 5 iteraciones con uso de herramientas
+  - Herramientas: historial de consumo, simulación de factura, info de tarifa
+  - Devuelve resumen, anomalías detectadas y recomendaciones de ahorro
 
 ## Endpoints
 
@@ -251,6 +281,7 @@ El motor de facturación está aislado en la capa de servicios para mantener la 
 |--------|----------|------|-------------|
 | GET | `/` | Bearer | Listar contratos del usuario |
 | GET | `/:id` | Bearer | Obtener un contrato |
+| GET | `/:id/ai-insights` | Bearer | Ejecutar agente IA para análisis del contrato |
 | POST | `/` | Bearer | Crear contrato |
 | PUT | `/:id` | Bearer | Actualizar contrato |
 | DELETE | `/:id` | Bearer | Eliminar contrato |
@@ -265,6 +296,24 @@ El motor de facturación está aislado en la capa de servicios para mantener la 
 | PUT | `/:recordId` | Bearer | Actualizar kWh (el periodo es inmutable) |
 | DELETE | `/:recordId` | Bearer | Eliminar registro |
 | GET | `/:recordId/simulate-billing` | Bearer | Simular factura CFE para este registro |
+
+### Ejemplo de respuesta — análisis con IA
+
+El agente consulta historial, simulaciones y tarifas de forma autónoma antes de responder:
+
+```json
+{
+  "summary": "Consumo residencial moderado en Mérida (T-1D) con patrón estacional marcado.",
+  "anomalies": [
+    "Variabilidad estacional significativa: consumo de verano 42% más alto comparado con tendencia invernal",
+    "Consumo verano concentrado en pocas semanas sugiere variabilidad en patrones de aire acondicionado"
+  ],
+  "recommendations": [
+    "Implementar medidas de eficiencia para verano: mejorar aislamiento térmico, mantener A/C a 25-26°C",
+    "Evaluar instalación de paneles solares para compensar consumo de verano"
+  ]
+}
+```
 
 ### Ejemplo de respuesta — simulación de factura
 
@@ -330,6 +379,7 @@ DATABASE_URL="postgresql://usuario:contraseña@localhost:5432/api_energy"
 JWT_SECRET="tu_jwt_secret"
 JWT_REFRESH_SECRET="tu_refresh_secret"
 PORT=3000
+ANTHROPIC_API_KEY="tu_anthropic_api_key"
 ```
 
 ### Base de datos
