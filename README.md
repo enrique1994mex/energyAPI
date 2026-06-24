@@ -197,14 +197,11 @@ npm run dev
 
 ## Project Status
 
-Backend API is functional and currently under active development.
+Backend API is functional and currently under active development. The frontend dashboard is complete and deployed at [https://cfe-contracts-production.up.railway.app](https://cfe-contracts-production.up.railway.app).
 
 Planned next steps:
-- Frontend dashboard (React / Next.js)
-- Charts and consumption reports
 - Pagination
-- Integration tests
-- Deployment
+- Charts and consumption reports
 
 ---
 
@@ -402,11 +399,8 @@ npm run dev
 
 ## Estado del proyecto
 
-El backend está funcional y en desarrollo activo.
+El backend está funcional y en desarrollo activo. El dashboard frontend está completo y desplegado en [https://cfe-contracts-production.up.railway.app](https://cfe-contracts-production.up.railway.app).
 
 Próximos pasos:
-- Dashboard frontend (React / Next.js)
-- Gráficas y reportes de consumo
 - Paginación
-- Tests de integración
-- Despliegue
+- Gráficas y reportes de consumo
