@@ -50,6 +50,10 @@ export const refreshToken = async (req, res, next) => {
   }
 };
 
+export const getProfile = (req, res) => {
+  res.json(req.user);
+};
+
 export const logout = async (req, res, next) => {
   try {
     const token = req.cookies.refreshToken;
