@@ -3,6 +3,15 @@ import { createContractSchema, updateContractSchema } from "../schemas/contract.
 import { AppError } from "../errors/AppError.js";
 import { parseId } from "../utils/parseId.js";
 
+export const getAllContracts = async (req, res, next) => {
+  try {
+    const contracts = await contractService.getAllContracts();
+    res.json(contracts);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getContracts = async (req, res, next) => {
   try {
     const contracts = await contractService.getContractsByUser(req.user.id);

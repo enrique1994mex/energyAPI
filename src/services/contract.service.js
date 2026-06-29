@@ -11,6 +11,16 @@ const CONTRACT_SELECT = {
   tariff: { select: { id: true, type: true } },
 };
 
+export const getAllContracts = async () => {
+  return prisma.energyContract.findMany({
+    select: {
+      ...CONTRACT_SELECT,
+      user: { select: { id: true, email: true, role: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+};
+
 export const getContractsByUser = async (userId) => {
   return prisma.energyContract.findMany({
     where: { userId },
