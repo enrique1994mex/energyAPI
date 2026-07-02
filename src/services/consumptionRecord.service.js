@@ -32,6 +32,16 @@ export const createConsumptionRecord = async (contractId, userId, recordData) =>
 
   const { periodStart, periodEnd, kwhNonSummer, kwhSummer } = recordData;
 
+  const overlap = await prisma.consumptionRecord.findFirst({
+    where: {
+      contractId,
+      periodStart: { lt: periodEnd },
+      periodEnd: { gt: periodStart },
+    },
+    select: { id: true },
+  });
+  if (overlap) throw new AppError("El periodo se solapa con un registro existente", 409);
+
   return prisma.consumptionRecord.create({
     data: { periodStart, periodEnd, kwhNonSummer, kwhSummer, contractId },
   });
