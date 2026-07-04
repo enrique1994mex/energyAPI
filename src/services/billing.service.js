@@ -1,6 +1,7 @@
 import prisma from '../config/prisma.js';
 import { AppError } from '../errors/AppError.js';
 import { countSeasonDays, findMostCompleteMonth, applyBlocks, getDaysInMonth } from '../utils/billing.utils.js';
+import { getCachedSimulation, setCachedSimulation } from '../cache/billing.cache.js';
 
 const IVA_RATE = 0.16;
 // DAP (Derecho al Alumbrado Público) es un impuesto municipal variable.
@@ -92,6 +93,9 @@ export async function simulateBilling(recordId, contractId, userId) {
   const { tariff, city } = record.contract;
   const { periodStart, periodEnd, kwhNonSummer, kwhSummer } = record;
 
+  const cached = await getCachedSimulation(recordId, kwhNonSummer, kwhSummer, tariff.type, city);
+  if (cached) return cached;
+
   // Rango de verano de la ciudad: fuente de verdad para determinar temporalidad.
   // Si el contrato no tiene ciudad asignada, el periodo se trata como completamente no-verano.
   let summerStartMonth = null;
@@ -168,7 +172,7 @@ export async function simulateBilling(recordId, contractId, userId) {
   const facturaDelPeriodo = Math.round((energiaSubtotal + iva) * 100) / 100;
   const dapEstimado      = Math.round(facturaDelPeriodo * DAP_RATE * 100) / 100;
 
-  return {
+  const result = {
     period: {
       start: periodStart,
       end: periodEnd,
@@ -188,4 +192,7 @@ export async function simulateBilling(recordId, contractId, userId) {
     dapEstimado,
     totalEstimado: Math.round((facturaDelPeriodo + dapEstimado) * 100) / 100,
   };
+
+  await setCachedSimulation(recordId, kwhNonSummer, kwhSummer, tariff.type, city, result);
+  return result;
 }
