@@ -76,5 +76,8 @@ export const deleteContract = async (contractId, userId) => {
   });
   if (!existingContract) throw new AppError("Contrato no encontrado", 404);
 
-  await prisma.energyContract.delete({ where: { id: contractId } });
+  await prisma.$transaction([
+    prisma.consumptionRecord.deleteMany({ where: { contractId } }),
+    prisma.energyContract.delete({ where: { id: contractId } }),
+  ]);
 };
