@@ -18,7 +18,13 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(requestLogger);
 
-app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
+app.get("/health", async (_, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "api-express",
+    uptime: process.uptime(),
+  });
+});
 
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
