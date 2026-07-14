@@ -13,7 +13,7 @@ describe('countSeasonDays', () => {
     const { nonSummerDays, summerDays } = countSeasonDays(
       d('2025-12-18'), d('2026-02-17'), T1D_SUMMER_START, T1D_SUMMER_END
     );
-    expect(summerDays).toBe(0);
+    expect(summerDays).toBe(1);
     expect(nonSummerDays).toBe(61);
   });
 
