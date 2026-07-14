@@ -51,7 +51,7 @@ export const refreshToken = async (req, res, next) => {
 };
 
 export const getProfile = (req, res) => {
-  res.json(req.user);
+  res.json({ user: req.user });
 };
 
 export const logout = async (req, res, next) => {

@@ -173,10 +173,9 @@ describe('POST /api/auth/logout', () => {
     );
   });
 
-  it('sin cookie -> 400', async () => {
+  it('sin cookie -> 204 (idempotente, no requiere sesión activa)', async () => {
     const res = await request(app).post('/api/auth/logout');
 
-    expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({ message: 'Refresh token required' });
+    expect(res.status).toBe(204);
   });
 });
